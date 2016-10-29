@@ -1,17 +1,20 @@
 #ifndef MEMORY_OBSERVER_H_
 #define MEMORY_OBSERVER_H_
 
-class MemoryObserver {
+#include "memory_defines.h"
+
+class MemoryObserver
+{
   private:
-		enum MemoryState { LOW, MEDIUM, HIGH };
-		MemoryState previously_known_state;
+    MemoryState _previously_known_state;
 
-	public:
-		virtual void lowPressure();
-		virtual void mediumPressure();
-		virtual void highPressure();
+  public:
+    virtual void lowPressure();
+    virtual void medPressure();
+    virtual void highPressure();
 
-		MemoryObserver();
+    MemoryObserver();
+    virtual ~MemoryObserver() {}
 };
 
 #endif

@@ -3,13 +3,14 @@
 
 #include "memory_observer.h"
 
-class SubprocessA : public MemoryObserver {
-	public:
-		void lowPressure();
-		void mediumPressure();
-		void highPressure();
+class SubprocessA : public MemoryObserver
+{
+  public:
+    void lowPressure();
+    void medPressure();
+    void highPressure();
 
-		SubprocessA();
+    SubprocessA();
 };
 
 #endif

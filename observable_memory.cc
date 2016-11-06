@@ -7,6 +7,24 @@
 
 #include "observable_memory.h"
 
+ObservableMemory::ObservableMemory(unsigned int med_threshold,
+                                   unsigned int high_threshold,
+                                   unsigned int max_available_memory,
+                                   unsigned int polling_period_ms,
+                                   std::ostream* log_ostream,
+                                   bool enable_logging
+                                  )
+{
+  _med_threshold = med_threshold;
+  _high_threshold = high_threshold;
+  _max_available_memory = max_available_memory;
+  _polling_period_ms = polling_period_ms;
+  _log_ostream = log_ostream;
+  _enable_logging = enable_logging;
+  _running = true;
+  _thread_created = false;
+}
+
 void ObservableMemory::notifyObservers(MemoryState cur_state)
 {
   for (std::vector<MemoryObserver>::iterator observer_it = observers.begin();
@@ -56,7 +74,23 @@ void ObservableMemory::addObserver(MemoryObserver observer)
   observers.push_back(observer);
 }
 
-void ObservableMemory::start()
+
+void ObservableMemory::start_create_thread()
+{
+  if (!_thread_created) {
+    _thread_created = true;
+    pthread_create(&_memory_thread, 0, &ObservableMemory::thread_start, this);
+  }
+}
+
+void* ObservableMemory::thread_start(void* class_instance)
+{
+  ((ObservableMemory*)class_instance)->start_blocking();
+
+  return 0;
+}
+
+void ObservableMemory::start_blocking()
 {
   //Get initial memory state and update all observers
   unsigned int total_rss = getProcTotal("VmRSS");
@@ -66,12 +100,24 @@ void ObservableMemory::start()
 
   _previously_known_state = cur_state;
 
-  while (1) {
+  while (_running) {
     usleep(_polling_period_ms);
 
     refreshStatus();
     log();
   }
+}
+
+void ObservableMemory::stop()
+{
+  _running = false;
+}
+
+void ObservableMemory::stop_join_thread()
+{
+  this->stop();
+  pthread_join(_memory_thread, 0);
+  _thread_created = false;
 }
 
 unsigned int ObservableMemory::getProcTotal(std::string trend)
@@ -93,6 +139,8 @@ unsigned int ObservableMemory::getProcTotal(std::string trend)
       total_trend = atoi(result);
       std::cout << total_trend << std::endl;
     }
+
+    pclose(cmd_fp);
   }
 
   if (total_trend < 0) {

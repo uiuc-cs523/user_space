@@ -13,7 +13,7 @@ class MemoryObserver
     virtual void medPressure();
     virtual void highPressure();
 
-    MemoryObserver();
+    MemoryObserver() {}
     virtual ~MemoryObserver() {}
 };
 
